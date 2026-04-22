@@ -1,0 +1,13 @@
+As a user, I want to submit a job posting URL so the system can capture the job automatically.
+
+As a user, I want the system to extract job title, company, location, skills, description, and apply link from the posting.
+
+As a user, I want the extracted data stored in a database so I can search and manage it later.
+
+As a user, I want to view all saved jobs in one place.
+
+As a user, I want to update a job’s status like saved, applied, interview, rejected, or offer.
+
+As a user, I want to add notes and follow-up reminders for each job.
+
+As a user, I want the system to log what was extracted and when, so I can trust and debug it.
