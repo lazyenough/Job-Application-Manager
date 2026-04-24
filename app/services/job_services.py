@@ -5,29 +5,20 @@ from uuid import UUID
 
 from app.db.session import SessionLocal
 from app.models.job import Job
+from app.schemas.job import JobCreate, JobUpdate
 
-def createJob(
-    db,
-    job_url: str,
-    job_title: str | None = None,
-    company_name: str | None = None,
-    location: str | None = None,
-    work_mode: str | None = None,
-    job_description: str | None = None,
-    date_posted=None,
-    status: str = "saved",
-) -> Job:
+def createJob(db, job_data: JobCreate) -> Job:
 
     try:
         job = Job(
-            job_url=job_url,
-            job_title=job_title,
-            company_name=company_name,
-            location=location,
-            work_mode=work_mode,
-            job_description=job_description,
-            date_posted=date_posted,
-            status=status,
+            job_url=str(job_data.job_url),
+            job_title=job_data.job_title,
+            company_name=job_data.company_name,
+            location=job_data.location,
+            work_mode=job_data.work_mode,
+            job_description=job_data.job_description,
+            date_posted=job_data.date_posted,
+            status=job_data.status,
         )
 
         db.add(job)
@@ -48,7 +39,16 @@ def readJobs(db) -> list[Job]:
         db.close()
 
 
-def updateJobStatus(db, job_id: UUID, new_status: str) -> Job:
+def readJobById(db, job_id: UUID):
+    try:
+        statement = select(Job).where(Job.id == job_id)
+        job = db.execute(statement).scalar_one_or_none()
+        return job
+    finally:
+        db.close()
+
+
+def updateJob(db, job_id: UUID, updated_job: JobUpdate) -> Job:
     try:
         statement = select(Job).where(Job.id == job_id)
         job = db.execute(statement).scalar_one_or_none()
@@ -58,7 +58,11 @@ def updateJobStatus(db, job_id: UUID, new_status: str) -> Job:
             db.close()
             return
 
-        job.status = new_status
+        update_data = updated_job.model_dump(exclude_unset=True)
+
+        for field, value in update_data.items():
+            setattr(job, field, value)
+
         db.commit()
         db.refresh(job)
         return job
