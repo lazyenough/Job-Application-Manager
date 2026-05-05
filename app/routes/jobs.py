@@ -5,7 +5,9 @@ from sqlalchemy.orm import Session
 
 from app.db.dependencies import getDB
 from app.schemas.job import JobCreate, JobResponse, JobUpdate
+from app.schemas.ingestion import JobIngestRequest
 from app.services.job_services import createJob, deleteJob, readJobById, readJobs, updateJob
+from app.services.ingestion_service import ingest_job_url
 
 
 jobs_router = APIRouter(prefix="/jobs", tags=["Jobs APIs"])
@@ -51,3 +53,8 @@ def deleteJobEndpoint(job_id: UUID, db: Session = Depends(getDB)):
     deleteJob(db, job)
 
     return {"message": f"Job with ID: {job_id}, deleted successfully."}
+
+
+@jobs_router.post("/ingest", response_model=JobResponse)
+def ingest_job(job_request: JobIngestRequest, db: Session = Depends(getDB)):
+    return ingest_job_url(db, str(job_request.job_url))
