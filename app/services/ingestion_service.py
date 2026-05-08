@@ -49,8 +49,34 @@ def extract_company_name(soup: BeautifulSoup) -> str | None:
     return None
 
 
-def extract_location(soup: BeautifulSoup) -> str | None:
-    pass
+def extract_location(soup: BeautifulSoup, text: str) -> str | None:
+    job_location = soup.find("meta", attrs={"property": "job:location"})
+    if job_location and job_location.get("content"):
+        return job_location["content"].strip()
+
+    meta_location = soup.find("meta", attrs={"name": "location"})
+    if meta_location and meta_location.get("content"):
+        return meta_location["content"].strip()
+
+    lower_text = text.lower()
+
+    known_locations = [
+        "hyderabad",
+        "bengaluru",
+        "bangalore",
+        "pune",
+        "mumbai",
+        "delhi",
+        "gurugram",
+        "noida",
+        "chennai",
+    ]
+
+    for location in known_locations:
+        if location in lower_text:
+            return location.title()
+
+    return None
 
 
 def extract_work_mode(text: str) -> str | None:
@@ -66,28 +92,60 @@ def extract_work_mode(text: str) -> str | None:
     return None
 
 
-def ingest_job_url(db, job_url: str) -> JobResponse:
-    existing_job = get_job_by_url(db, job_url)
-    if existing_job:
-        return existing_job
-    
+def extract_job_data_from_url(job_url: str) -> dict:
     html_page = fetch_job_page(job_url)
     
     soup = parse_job_page(html_page)
     
     text = extract_text_from_page(soup)
     
+    if not text or len(text) < 200:
+        raise ValueError("Could not extract meaningful job content from the page.")
+    
     title = extract_job_title(soup)
     work_mode = extract_work_mode(text)
     company_name = extract_company_name(soup)
+    location = extract_location(soup, text)
+    
+    job_preview = {
+        "job_url":job_url,
+        "job_title":title,
+        "job_description":text,
+        "work_mode":work_mode,
+        "company_name":company_name, 
+        "location":location
+    }
+    
+    return job_preview
+
+
+def ingest_job_url(db, job_url: str) -> JobResponse:
+    existing_job = get_job_by_url(db, job_url)
+    if existing_job:
+        return existing_job
+    
+    extracted_data = extract_job_data_from_url(job_url)
     
     job = JobCreate(
         job_url=job_url,
-        job_title=title,
-        job_description=text,
-        work_mode=work_mode,
-        company_name=company_name
+        job_title=extracted_data["job_title"],
+        job_description=extracted_data["job_description"],
+        work_mode=extracted_data["work_mode"],
+        company_name=extracted_data["company_name"], 
+        location=extracted_data["location"]
     )
     
     return createJob(db, job)
     
+
+def preview_job_ingestion(job_url: str) -> dict:
+    extracted_data = extract_job_data_from_url(job_url)
+    
+    return {
+        "job_url": extracted_data["job_url"],
+        "job_title": extracted_data["job_title"],
+        "company_name": extracted_data["company_name"],
+        "location": extracted_data["location"],
+        "work_mode": extracted_data["work_mode"],
+        "job_description_preview": extracted_data["job_description"][:500],
+    }
