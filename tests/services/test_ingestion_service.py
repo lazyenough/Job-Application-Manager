@@ -1,7 +1,7 @@
 from bs4 import BeautifulSoup
 import pytest
 
-from app.services.ingestion_service import extract_company_name, extract_job_data_from_url, extract_job_title, extract_work_mode, extract_location
+from app.services.ingestion_service import extract_company_name, extract_job_data_from_url, extract_job_title, extract_work_mode, extract_location, ingest_job_url, preview_job_ingestion
 
 
 def test_extract_work_mode_remote():
@@ -185,3 +185,106 @@ def test_extract_job_title_return_none_when_missing():
     result = extract_job_title(soup)
     
     assert result == None
+
+
+def test_preview_job_ingestion_formats_response(monkeypatch):
+    def mock_extract_job_data_from_url(job_url: str):
+        return {
+            "job_url": job_url,
+            "job_title": "Backend Engineer",
+            "company_name": "Acme",
+            "location": "Pune",
+            "work_mode": "hybrid",
+            "job_description": "A" * 800,
+        }
+
+    monkeypatch.setattr(
+        "app.services.ingestion_service.extract_job_data_from_url",
+        mock_extract_job_data_from_url,
+    )
+
+    result = preview_job_ingestion("https://example.com/job/preview")
+
+    assert result["job_url"] == "https://example.com/job/preview"
+    assert result["job_title"] == "Backend Engineer"
+    assert result["company_name"] == "Acme"
+    assert result["location"] == "Pune"
+    assert result["work_mode"] == "hybrid"
+    assert result["job_description_preview"] == "A" * 500
+
+
+
+def test_ingest_job_url_returns_existing_job_for_duplicate(monkeypatch):
+    existing_job = {
+        "id": "11111111-1111-1111-1111-111111111111",
+        "job_url": "https://example.com/job/existing",
+        "job_title": "Existing Backend Engineer",
+    }
+
+    def mock_get_job_by_url(db, job_url: str):
+        return existing_job
+
+    monkeypatch.setattr(
+        "app.services.ingestion_service.get_job_by_url",
+        mock_get_job_by_url,
+    )
+
+    result = ingest_job_url(db=None, job_url="https://example.com/job/existing")
+
+    assert result == existing_job
+
+
+
+def test_ingest_job_url_creates_new_job(monkeypatch):
+    created_job = {
+        "id": "22222222-2222-2222-2222-222222222222",
+        "job_url": "https://example.com/job/new",
+        "job_title": "Backend Engineer",
+        "company_name": "Acme",
+        "location": "Pune",
+        "work_mode": "hybrid",
+        "job_description": "Build backend systems.",
+        "status": "saved",
+    }
+
+    captured = {}
+
+    def mock_get_job_by_url(db, job_url: str):
+        return None
+
+    def mock_extract_job_data_from_url(job_url: str):
+        return {
+            "job_url": job_url,
+            "job_title": "Backend Engineer",
+            "company_name": "Acme",
+            "location": "Pune",
+            "work_mode": "hybrid",
+            "job_description": "Build backend systems.",
+        }
+
+    def mock_create_job(db, job_data):
+        captured["job_data"] = job_data
+        return created_job
+
+    monkeypatch.setattr(
+        "app.services.ingestion_service.get_job_by_url",
+        mock_get_job_by_url,
+    )
+    monkeypatch.setattr(
+        "app.services.ingestion_service.extract_job_data_from_url",
+        mock_extract_job_data_from_url,
+    )
+    monkeypatch.setattr(
+        "app.services.ingestion_service.createJob",
+        mock_create_job,
+    )
+
+    result = ingest_job_url(db=None, job_url="https://example.com/job/new")
+
+    assert result == created_job
+    assert str(captured["job_data"].job_url) == "https://example.com/job/new"
+    assert captured["job_data"].job_title == "Backend Engineer"
+    assert captured["job_data"].company_name == "Acme"
+    assert captured["job_data"].location == "Pune"
+    assert captured["job_data"].work_mode == "hybrid"
+    assert captured["job_data"].job_description == "Build backend systems."

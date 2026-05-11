@@ -3,6 +3,7 @@ import requests
 from bs4 import BeautifulSoup
 
 from app.schemas.job import JobCreate, JobResponse
+from app.services.ai_extraction_service import extract_job_data_with_AI, merge_rule_based_and_ai_data
 from app.services.job_services import createJob, get_job_by_url
 
 
@@ -107,7 +108,7 @@ def extract_job_data_from_url(job_url: str) -> dict:
     company_name = extract_company_name(soup)
     location = extract_location(soup, text)
     
-    job_preview = {
+    rule_based_data = {
         "job_url":job_url,
         "job_title":title,
         "job_description":text,
@@ -116,7 +117,11 @@ def extract_job_data_from_url(job_url: str) -> dict:
         "location":location
     }
     
-    return job_preview
+    ai_data = extract_job_data_with_AI(text)
+    
+    merged_data = merge_rule_based_and_ai_data(rule_based_data, ai_data)
+    
+    return merged_data
 
 
 def ingest_job_url(db, job_url: str) -> JobResponse:
@@ -132,7 +137,8 @@ def ingest_job_url(db, job_url: str) -> JobResponse:
         job_description=extracted_data["job_description"],
         work_mode=extracted_data["work_mode"],
         company_name=extracted_data["company_name"], 
-        location=extracted_data["location"]
+        location=extracted_data["location"],
+        job_summary=extracted_data["job_summary"]
     )
     
     return createJob(db, job)
@@ -148,4 +154,5 @@ def preview_job_ingestion(job_url: str) -> dict:
         "location": extracted_data["location"],
         "work_mode": extracted_data["work_mode"],
         "job_description_preview": extracted_data["job_description"][:500],
+        "job_summary": extracted_data["job_summary"]
     }
