@@ -13,7 +13,6 @@ class JobCreate(BaseModel):
     job_description: str | None = None
     date_posted: date | None = None
     status: str = Field(default="saved", max_length=50)
-    job_summary: str | None = None
 
 
 class JobUpdate(BaseModel):

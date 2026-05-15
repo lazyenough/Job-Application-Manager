@@ -1,6 +1,7 @@
 from bs4 import BeautifulSoup
 import pytest
 
+from app.schemas.ingestion import AIJobExtractionResponse
 from app.services.ingestion_service import extract_company_name, extract_job_data_from_url, extract_job_title, extract_work_mode, extract_location, ingest_job_url, preview_job_ingestion
 
 
@@ -196,6 +197,7 @@ def test_preview_job_ingestion_formats_response(monkeypatch):
             "location": "Pune",
             "work_mode": "hybrid",
             "job_description": "A" * 800,
+            "job_summary" : "Backend role focused on APIs and service development."
         }
 
     monkeypatch.setattr(
@@ -211,6 +213,7 @@ def test_preview_job_ingestion_formats_response(monkeypatch):
     assert result["location"] == "Pune"
     assert result["work_mode"] == "hybrid"
     assert result["job_description_preview"] == "A" * 500
+    assert result["job_summary"] == "Backend role focused on APIs and service development."
 
 
 
@@ -288,3 +291,75 @@ def test_ingest_job_url_creates_new_job(monkeypatch):
     assert captured["job_data"].location == "Pune"
     assert captured["job_data"].work_mode == "hybrid"
     assert captured["job_data"].job_description == "Build backend systems."
+
+
+def test_extract_job_data_from_url_merges_rule_and_ai_data(monkeypatch):
+    def mock_fetch_job_page(job_url: str):
+        return "<html><head><title>Mock Job</title></head><body>Mock page</body></html>"
+
+    def mock_parse_job_page(html: str):
+        return BeautifulSoup("<html></html>", "lxml")
+
+    def mock_extract_text_from_page(soup):
+        return "This is a backend engineering role with hybrid work flexibility." * 5
+
+    def mock_extract_job_title(soup):
+        return "Backend Engineer"
+
+    def mock_extract_work_mode(text: str):
+        return "hybrid"
+
+    def mock_extract_company_name(soup):
+        return None
+
+    def mock_extract_location(soup, text: str):
+        return None
+
+    def mock_extract_job_data_with_ai(job_text: str):
+        return AIJobExtractionResponse(
+            company_name="Acme",
+            location="Pune",
+            job_summary="Backend role focused on APIs and service development.",
+        )
+
+    monkeypatch.setattr(
+        "app.services.ingestion_service.fetch_job_page",
+        mock_fetch_job_page,
+    )
+    monkeypatch.setattr(
+        "app.services.ingestion_service.parse_job_page",
+        mock_parse_job_page,
+    )
+    monkeypatch.setattr(
+        "app.services.ingestion_service.extract_text_from_page",
+        mock_extract_text_from_page,
+    )
+    monkeypatch.setattr(
+        "app.services.ingestion_service.extract_job_title",
+        mock_extract_job_title,
+    )
+    monkeypatch.setattr(
+        "app.services.ingestion_service.extract_work_mode",
+        mock_extract_work_mode,
+    )
+    monkeypatch.setattr(
+        "app.services.ingestion_service.extract_company_name",
+        mock_extract_company_name,
+    )
+    monkeypatch.setattr(
+        "app.services.ingestion_service.extract_location",
+        mock_extract_location,
+    )
+    monkeypatch.setattr(
+        "app.services.ingestion_service.extract_job_data_with_AI",
+        mock_extract_job_data_with_ai,
+    )
+
+    result = extract_job_data_from_url("https://example.com/job/123")
+
+    assert result["job_url"] == "https://example.com/job/123"
+    assert result["job_title"] == "Backend Engineer"
+    assert result["work_mode"] == "hybrid"
+    assert result["company_name"] == "Acme"
+    assert result["location"] == "Pune"
+    assert result["job_summary"] == "Backend role focused on APIs and service development."

@@ -1,5 +1,17 @@
-from app.schemas.ingestion import AIJobExtractionResponse
+import json
 
+from app.schemas.ingestion import AIJobExtractionResponse
+from openai import OpenAI
+
+import os
+from dotenv import load_dotenv
+
+load_dotenv()
+
+client = OpenAI(
+    api_key=os.getenv("GROQ_API_KEY"),
+    base_url="https://api.groq.com/openai/v1",
+)
 
 def extract_job_data_with_AI(job_text: str) -> AIJobExtractionResponse:
     prompt = build_AI_extraction_prompt(job_text)
@@ -11,39 +23,66 @@ def extract_job_data_with_AI(job_text: str) -> AIJobExtractionResponse:
 
 def build_AI_extraction_prompt(job_text: str) -> str:
     return f"""
-        You are extracting structured information from a job posting.
+    You are an information extraction system.
 
-        Extract only the following fields:
-        - company_name
-        - job_title
-        - location
-        - date_posted
-        - job_summary
+    Extract structured information from the job posting text below.
 
-        Rules:
-        - If a field is not clearly present, return null.
-        - Do not guess.
-        - job_summary should be a short 2-3 sentence summary.
-        - date_posted should be in YYYY-MM-DD format if available, otherwise null.
-        - Return only a JSON object.
-        - Do not include extra text, markdown, or explanation.
+    Return only a valid JSON object with exactly these keys:
+    - company_name
+    - job_title
+    - location
+    - date_posted
+    - job_summary
 
-        Job posting text:
-        {job_text}
+    Rules:
+    - If a field is not explicitly or clearly present, return null.
+    - Do not guess or infer missing values.
+    - job_title should be the actual title of the job, not a heading unrelated to the role.
+    - company_name should be the employer/company, not the job portal or platform name, unless no better company is available.
+    - location should be a place/location only, not work mode.
+    - date_posted should be in YYYY-MM-DD format if available, otherwise null.
+    - job_summary should be a concise 2-3 sentence summary of the role and responsibilities.
+    - Do not return markdown.
+    - Do not wrap the JSON in code fences.
+    - Do not include explanations or extra text.
+
+    Job posting text:
+    {job_text}
     """.strip()
 
 
 def call_llm(prompt: str):
-    return {
-        "job_title": "Backend Engineer",
-        "job_summary": "This is a backend engineering role focused on API and service development."
-    }
+    response = client.responses.create(
+        input=prompt,
+        model="openai/gpt-oss-20b",
+    )
+
+    return response.output_text
 
 
 def parse_llm_output(llm_response) -> AIJobExtractionResponse:
-    return AIJobExtractionResponse(**llm_response)
+    cleaned_response = llm_response.strip()
 
+    # if cleaned_response.startswith("```json"):
+    #     cleaned_response = cleaned_response.removeprefix("```json").strip()
+    # elif cleaned_response.startswith("```"):
+    #     cleaned_response = cleaned_response.removeprefix("```").strip()
 
+    # if cleaned_response.endswith("```"):
+    #     cleaned_response = cleaned_response.removesuffix("```").strip()
+
+    start_index = cleaned_response.find("{")
+    end_index = cleaned_response.rfind("}")
+
+    if start_index == -1 or end_index == -1 or start_index > end_index:
+        raise ValueError("No valid JSON object found in LLM output.")
+
+    json_text = cleaned_response[start_index:end_index + 1]
+
+    parsed_output = json.loads(json_text)
+    return AIJobExtractionResponse(**parsed_output)
+
+    
 def merge_rule_based_and_ai_data(rule_data: dict, ai_data: AIJobExtractionResponse) -> dict:
     merged_data = rule_data.copy()
 

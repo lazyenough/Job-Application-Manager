@@ -138,7 +138,6 @@ def ingest_job_url(db, job_url: str) -> JobResponse:
         work_mode=extracted_data["work_mode"],
         company_name=extracted_data["company_name"], 
         location=extracted_data["location"],
-        job_summary=extracted_data["job_summary"]
     )
     
     return createJob(db, job)
@@ -155,4 +154,40 @@ def preview_job_ingestion(job_url: str) -> dict:
         "work_mode": extracted_data["work_mode"],
         "job_description_preview": extracted_data["job_description"][:500],
         "job_summary": extracted_data["job_summary"]
+    }
+
+
+def preview_job_ingestion_debug(job_url: str) -> dict:
+    html_page = fetch_job_page(job_url)
+
+    soup = parse_job_page(html_page)
+
+    text = extract_text_from_page(soup)
+
+    if not text or len(text) < 100:
+        raise ValueError("Could not extract meaningful job content from the page.")
+
+    title = extract_job_title(soup)
+    work_mode = extract_work_mode(text)
+    company_name = extract_company_name(soup)
+    location = extract_location(soup, text)
+
+    rule_based_data = {
+        "job_url": job_url,
+        "job_title": title,
+        "company_name": company_name,
+        "location": location,
+        "work_mode": work_mode,
+        "date_posted": None,
+        "job_description": text,
+    }
+
+    ai_extracted_data = extract_job_data_with_AI(text)
+
+    merged_data = merge_rule_based_and_ai_data(rule_based_data, ai_extracted_data)
+
+    return {
+        "rule_based_data": rule_based_data,
+        "ai_extracted_data": ai_extracted_data.model_dump(),
+        "merged_data": merged_data,
     }

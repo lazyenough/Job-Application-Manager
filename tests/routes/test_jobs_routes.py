@@ -19,6 +19,7 @@ def test_preview_job_ingest_success(monkeypatch):
             "location": "Pune",
             "work_mode": "hybrid",
             "job_description_preview": "Build backend systems using Python.",
+            "job_summary": ""
         }
 
     monkeypatch.setattr(
@@ -40,6 +41,7 @@ def test_preview_job_ingest_success(monkeypatch):
     assert data["location"] == "Pune"
     assert data["work_mode"] == "hybrid"
     assert data["job_description_preview"] == "Build backend systems using Python."
+    assert data["job_summary"] == ""
 
 
 def test_preview_job_ingest_fetch_failure(monkeypatch):
@@ -194,4 +196,58 @@ def test_ingest_job_low_content(monkeypatch):
     }
 
 
+def test_preview_job_ingest_debug_success(monkeypatch):
+    def mock_preview_job_ingestion_debug(job_url: str):
+        return {
+            "rule_based_data": {
+                "job_url": job_url,
+                "job_title": "Backend Engineer",
+                "company_name": None,
+                "location": None,
+                "work_mode": "hybrid",
+                "date_posted": None,
+                "job_description": "Rule-based extracted text",
+            },
+            "ai_extracted_data": {
+                "company_name": "Acme",
+                "job_title": "Backend Engineer",
+                "location": "Pune",
+                "date_posted": None,
+                "job_summary": "Backend role focused on APIs and service development.",
+            },
+            "merged_data": {
+                "job_url": job_url,
+                "job_title": "Backend Engineer",
+                "company_name": "Acme",
+                "location": "Pune",
+                "work_mode": "hybrid",
+                "date_posted": None,
+                "job_description": "Rule-based extracted text",
+                "job_summary": "Backend role focused on APIs and service development.",
+            },
+        }
+
+    monkeypatch.setattr(
+        "app.routes.jobs.preview_job_ingestion_debug",
+        mock_preview_job_ingestion_debug,
+    )
+
+    response = client.post(
+        "/jobs/ingest/preview/debug",
+        json={"job_url": "https://example.com/job/debug"},
+    )
+
+    assert response.status_code == 200
+
+    data = response.json()
+
+    assert "rule_based_data" in data
+    assert "ai_extracted_data" in data
+    assert "merged_data" in data
+
+    assert data["rule_based_data"]["job_title"] == "Backend Engineer"
+    assert data["ai_extracted_data"]["company_name"] == "Acme"
+    assert data["merged_data"]["company_name"] == "Acme"
+    assert data["merged_data"]["location"] == "Pune"
+    assert data["merged_data"]["job_summary"] == "Backend role focused on APIs and service development."
 
