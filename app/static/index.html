@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Job Ingestion Preview</title>
+    <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+    <h1>Job Ingestion Preview</h1>
+
+    <div class="card">
+        <input
+            type="text"
+            id="jobUrl"
+            placeholder="Enter a job posting URL"
+        />
+        <div class="button-group">
+            <button id="previewBtn">Preview Extraction</button>
+            <button id="ingestBtn">Ingest Job</button>
+            <button id="loadJobsBtn">Load Saved Jobs</button>
+        </div>
+    </div>
+
+    <div class="error-card" id="errorBox"></div>
+    <div class="card success-card" id="successBox" style="display: none;"></div>
+
+    <div class="result-card" id="resultCard">
+        <div class="field">
+            <div class="label">Job Title</div>
+            <div class="value" id="jobTitle"></div>
+        </div>
+
+        <div class="field">
+            <div class="label">Company Name</div>
+            <div class="value" id="companyName"></div>
+        </div>
+
+        <div class="field">
+            <div class="label">Work Location</div>
+            <div class="value" id="workLocation"></div>
+        </div>
+
+        <div class="field">
+            <div class="label">Work Mode</div>
+            <div class="value" id="workMode"></div>
+        </div>
+
+        <div class="field">
+            <div class="label">Job Summary</div>
+            <div class="value" id="jobSummary"></div>
+        </div>
+
+        <div class="field">
+            <div class="label">Description Preview</div>
+            <div class="value" id="jobDescriptionPreview"></div>
+        </div>
+    </div>
+
+    <div class="result-card" id="savedJobsCard">
+        <h2>Saved Jobs</h2>
+        <div id="savedJobsList"></div>
+    </div>
+
+    <script src="/static/app.js"></script>
+</body>
+</html>

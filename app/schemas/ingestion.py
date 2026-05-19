@@ -1,4 +1,5 @@
 from datetime import date
+from uuid import UUID
 
 from pydantic import BaseModel, HttpUrl
 
@@ -23,3 +24,8 @@ class AIJobExtractionResponse(BaseModel):
     location: str | None = None
     date_posted: date | None = None
     job_summary: str | None = None
+
+
+class IngestionRunResponse(BaseModel):
+    ingestion_run_id: UUID
+    status: str 

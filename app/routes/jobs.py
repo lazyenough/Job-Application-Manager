@@ -40,7 +40,7 @@ def getJobByIdEndpoint(job_id: UUID, db: Session = Depends(getDB),):
     return job
 
 
-@jobs_router.patch("/jobs/{job_id}", response_model=JobResponse)
+@jobs_router.patch("/{job_id}", response_model=JobResponse)
 def updateJobEndpoint(job_id: UUID, job_data: JobUpdate, db: Session = Depends(getDB)):
     job = getJobByID(db, job_id)
     updated_job = updateJob(db, job, job_data)
@@ -48,7 +48,7 @@ def updateJobEndpoint(job_id: UUID, job_data: JobUpdate, db: Session = Depends(g
     return updated_job
 
 
-@jobs_router.delete("/jobs/{job_id}")
+@jobs_router.delete("/{job_id}")
 def deleteJobEndpoint(job_id: UUID, db: Session = Depends(getDB)):
     job = getJobByID(db, job_id)
     deleteJob(db, job)

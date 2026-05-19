@@ -23,6 +23,7 @@ class Job(Base):
     work_mode : Mapped[str | None] = mapped_column(String(255), unique=False, nullable=True)
     job_description : Mapped[str | None] = mapped_column(Text, unique=False, nullable=True)
     date_posted: Mapped[date | None] = mapped_column(Date, unique=False, nullable=True)
+    job_summary: Mapped[str | None] = mapped_column(Text, unique=False, nullable=True)
     status: Mapped[str] = mapped_column(
         String(50),
         nullable=False,

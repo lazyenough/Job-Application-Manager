@@ -138,6 +138,7 @@ def ingest_job_url(db, job_url: str) -> JobResponse:
         work_mode=extracted_data["work_mode"],
         company_name=extracted_data["company_name"], 
         location=extracted_data["location"],
+        job_summary=extracted_data["job_summary"]
     )
     
     return createJob(db, job)
@@ -191,3 +192,6 @@ def preview_job_ingestion_debug(job_url: str) -> dict:
         "ai_extracted_data": ai_extracted_data.model_dump(),
         "merged_data": merged_data,
     }
+
+
+# def push_ingestion_in_job_queue(job_url: str)
