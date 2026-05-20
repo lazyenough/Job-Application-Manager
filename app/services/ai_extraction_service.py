@@ -33,6 +33,10 @@ def build_AI_extraction_prompt(job_text: str) -> str:
     - location
     - date_posted
     - job_summary
+    
+    job_summary must contains following keys:
+    - Required Experience (in years)
+    - Key Skills 
 
     Rules:
     - If a field is not explicitly or clearly present, return null.
