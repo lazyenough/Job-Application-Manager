@@ -1,6 +1,6 @@
 import pytest
 
-from app.schemas.ingestion import AIJobExtractionResponse
+from app.schemas.ingestion import AIJobExtractionResponse, JobSummary
 from app.services.ai_extraction_service import merge_rule_based_and_ai_data, parse_llm_output
 
 
@@ -11,7 +11,10 @@ def test_parse_llm_output_success():
         "job_title": "Backend Engineer",
         "location": "Pune",
         "date_posted": null,
-        "job_summary": "This is a backend engineering role focused on APIs and service development."
+        "job_summary": {
+            "required_experience": "3+ years",
+            "key_skills": ["Python", "FastAPI", "SQLAlchemy"]
+        }
     }
     """
 
@@ -21,7 +24,9 @@ def test_parse_llm_output_success():
     assert result.job_title == "Backend Engineer"
     assert result.location == "Pune"
     assert result.date_posted is None
-    assert result.job_summary == "This is a backend engineering role focused on APIs and service development."
+    assert result.job_summary is not None
+    assert result.job_summary.required_experience == "3+ years"
+    assert result.job_summary.key_skills == ["Python", "FastAPI", "SQLAlchemy"]
 
 
 def test_parse_llm_output_raises_for_invalid_json():
@@ -47,7 +52,10 @@ def test_merge_rule_based_and_ai_data_fills_missing_fields():
         job_title="Backend Engineer",
         location="Pune",
         date_posted=None,
-        job_summary="Backend role focused on APIs and service development.",
+        job_summary=JobSummary(
+            required_experience= "3+ years",
+            key_skills= ["Python", "FastAPI", "SQLAlchemy"]
+        ),
     )
 
     result = merge_rule_based_and_ai_data(rule_data, ai_data)
@@ -58,7 +66,8 @@ def test_merge_rule_based_and_ai_data_fills_missing_fields():
     assert result["location"] == "Pune"
     assert result["work_mode"] == "hybrid"
     assert result["job_description"] == "Long extracted job text"
-    assert result["job_summary"] == "Backend role focused on APIs and service development."
+    assert result["job_summary"].required_experience == "3+ years"
+    assert result["job_summary"].key_skills == ["Python", "FastAPI", "SQLAlchemy"]
 
 
 def test_merge_rule_based_and_ai_data_does_not_override_existing_fields():
@@ -77,7 +86,10 @@ def test_merge_rule_based_and_ai_data_does_not_override_existing_fields():
         job_title="AI Backend Engineer",
         location="Pune",
         date_posted=None,
-        job_summary="Backend role focused on APIs and service development.",
+        job_summary=JobSummary(
+            required_experience= "3+ years",
+            key_skills= ["Python", "FastAPI", "SQLAlchemy"]
+        ),
     )
 
     result = merge_rule_based_and_ai_data(rule_data, ai_data)
@@ -86,7 +98,8 @@ def test_merge_rule_based_and_ai_data_does_not_override_existing_fields():
     assert result["company_name"] == "Rule Based Company"
     assert result["location"] == "Bengaluru"
     assert result["work_mode"] == "hybrid"
-    assert result["job_summary"] == "Backend role focused on APIs and service development."
+    assert result["job_summary"].required_experience == "3+ years"
+    assert result["job_summary"].key_skills == ["Python", "FastAPI", "SQLAlchemy"]
     
 
 def test_parse_llm_output_handles_code_fenced_json():
@@ -97,7 +110,10 @@ def test_parse_llm_output_handles_code_fenced_json():
         "job_title": "Backend Engineer",
         "location": "Pune",
         "date_posted": null,
-        "job_summary": "Backend engineering role."
+        "job_summary": {
+            "required_experience": "3+ years",
+            "key_skills": ["Python", "FastAPI", "SQLAlchemy"]
+        }
     }
     ```
     """
@@ -108,7 +124,8 @@ def test_parse_llm_output_handles_code_fenced_json():
     assert result.job_title == "Backend Engineer"
     assert result.location == "Pune"
     assert result.date_posted is None
-    assert result.job_summary == "Backend engineering role."
+    assert result.job_summary.required_experience == "3+ years"
+    assert result.job_summary.key_skills == ["Python", "FastAPI", "SQLAlchemy"]
     
 
 def test_parse_llm_output_handles_extra_text_around_json():
@@ -120,7 +137,10 @@ def test_parse_llm_output_handles_extra_text_around_json():
         "job_title": "Backend Engineer",
         "location": "Pune",
         "date_posted": null,
-        "job_summary": "Backend engineering role."
+        "job_summary": {
+            "required_experience": "3+ years",
+            "key_skills": ["Python", "FastAPI", "SQLAlchemy"]
+        }
     }
     ```
     """
@@ -131,4 +151,5 @@ def test_parse_llm_output_handles_extra_text_around_json():
     assert result.job_title == "Backend Engineer"
     assert result.location == "Pune"
     assert result.date_posted is None
-    assert result.job_summary == "Backend engineering role."
+    assert result.job_summary.required_experience == "3+ years"
+    assert result.job_summary.key_skills == ["Python", "FastAPI", "SQLAlchemy"]

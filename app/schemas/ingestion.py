@@ -18,12 +18,17 @@ class JobIngestPreviewResponse(BaseModel):
     job_summary: str | None
 
 
+class JobSummary(BaseModel):
+    required_experience: str | None = None
+    key_skills: list[str] | None = None
+
+
 class AIJobExtractionResponse(BaseModel):
     company_name: str | None = None
     job_title: str | None = None
     location: str | None = None
     date_posted: date | None = None
-    job_summary: dict | None = None
+    job_summary: JobSummary | None = None
 
 
 class IngestionRunResponse(BaseModel):
