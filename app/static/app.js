@@ -43,7 +43,12 @@ function renderSavedJobs(jobs) {
                 <strong>Work Mode:</strong> ${job.work_mode ?? "Not available"} |
                 <strong>Status:</strong> ${job.status ?? "Not available"}
             </div>
-            <p><strong>Summary:</strong> ${job.job_summary ?? "Not available"}</p>
+            <p><strong>Required Experience:</strong> ${
+                job.job_summary?.required_experience ?? "Not available"
+            }</p>
+            <p><strong>Key Skills:</strong> ${
+                job.job_summary?.key_skills?.join(", ") ?? "Not available"
+            }</p>
             <div class="status-update-row">
                 <select id="status-${job.id}">
                     <option value="saved" ${job.status === "saved" ? "selected" : ""}>saved</option>
@@ -197,7 +202,15 @@ previewBtn.addEventListener("click", async () => {
         setValue(companyName, data.company_name);
         setValue(workLocation, data.location);
         setValue(workMode, data.work_mode);
-        setValue(jobSummary, data.job_summary);
+        if (data.job_summary) {
+            const requiredExperience = data.job_summary.required_experience ?? "Not available";
+            const keySkills = data.job_summary.key_skills?.join(", ") ?? "Not available";
+
+            jobSummary.textContent =
+                `Required Experience: ${requiredExperience}\nKey Skills: ${keySkills}`;
+        } else {
+            jobSummary.textContent = "Not available";
+        }
         setValue(jobDescriptionPreview, data.job_description_preview);
 
         resultCard.style.display = "block";

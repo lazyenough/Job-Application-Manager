@@ -7,6 +7,11 @@ from pydantic import BaseModel, HttpUrl
 class JobIngestRequest(BaseModel):
     job_url: HttpUrl
     
+    
+class JobSummary(BaseModel):
+    required_experience: str | None = None
+    key_skills: list[str] | None = None
+
 
 class JobIngestPreviewResponse(BaseModel):
     job_url: HttpUrl
@@ -15,12 +20,7 @@ class JobIngestPreviewResponse(BaseModel):
     work_mode: str | None
     company_name: str | None
     location: str | None
-    job_summary: str | None
-
-
-class JobSummary(BaseModel):
-    required_experience: str | None = None
-    key_skills: list[str] | None = None
+    job_summary: JobSummary | None
 
 
 class AIJobExtractionResponse(BaseModel):
