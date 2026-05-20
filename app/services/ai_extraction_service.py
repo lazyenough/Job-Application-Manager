@@ -35,8 +35,8 @@ def build_AI_extraction_prompt(job_text: str) -> str:
     - job_summary
     
     job_summary must be a JSON object with exactly these keys:
-    - required_experience
-    - key_skills
+    - required_experience: a string describing the required experience, such as "3+ years", or null if not clearly present
+    - key_skills: a list of strings containing the key required skills, or null if not clearly present
 
     Rules:
     - If a field is not explicitly or clearly present, return null.
