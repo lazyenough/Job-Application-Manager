@@ -1,7 +1,7 @@
 from bs4 import BeautifulSoup
 import pytest
 
-from app.schemas.ingestion import AIJobExtractionResponse
+from app.schemas.ingestion import AIJobExtractionResponse, JobSummary
 from app.services.ingestion_service import extract_company_name, extract_job_data_from_url, extract_job_title, extract_work_mode, extract_location, ingest_job_url, preview_job_ingestion
 
 
@@ -263,6 +263,10 @@ def test_ingest_job_url_creates_new_job(monkeypatch):
             "location": "Pune",
             "work_mode": "hybrid",
             "job_description": "Build backend systems.",
+            "job_summary": {
+                "required_experience": "3+ years",
+                "key_skills": ["Python", "FastAPI", "SQLAlchemy"]
+            }
         }
 
     def mock_create_job(db, job_data):
@@ -291,6 +295,8 @@ def test_ingest_job_url_creates_new_job(monkeypatch):
     assert captured["job_data"].location == "Pune"
     assert captured["job_data"].work_mode == "hybrid"
     assert captured["job_data"].job_description == "Build backend systems."
+    assert captured["job_data"].job_summary.required_experience == "3+ years"
+    assert captured["job_data"].job_summary.key_skills == ["Python", "FastAPI", "SQLAlchemy"]
 
 
 def test_extract_job_data_from_url_merges_rule_and_ai_data(monkeypatch):
@@ -319,7 +325,10 @@ def test_extract_job_data_from_url_merges_rule_and_ai_data(monkeypatch):
         return AIJobExtractionResponse(
             company_name="Acme",
             location="Pune",
-            job_summary="Backend role focused on APIs and service development.",
+            job_summary=JobSummary(
+                required_experience= "3+ years",
+                key_skills= ["Python", "FastAPI", "SQLAlchemy"]
+            ),
         )
 
     monkeypatch.setattr(
@@ -362,4 +371,5 @@ def test_extract_job_data_from_url_merges_rule_and_ai_data(monkeypatch):
     assert result["work_mode"] == "hybrid"
     assert result["company_name"] == "Acme"
     assert result["location"] == "Pune"
-    assert result["job_summary"] == "Backend role focused on APIs and service development."
+    assert result["job_summary"].required_experience == "3+ years"
+    assert result["job_summary"].key_skills == ["Python", "FastAPI", "SQLAlchemy"]

@@ -17,7 +17,7 @@ def createJob(db, job_data: JobCreate) -> Job:
         work_mode=job_data.work_mode,
         job_description=job_data.job_description,
         date_posted=job_data.date_posted,
-        job_summary=job_data.job_summary,
+        job_summary=job_data.job_summary.model_dump() if job_data.job_summary else None,
         status=job_data.status,
     )
 

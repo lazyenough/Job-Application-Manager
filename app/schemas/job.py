@@ -3,6 +3,8 @@ from uuid import UUID
 
 from pydantic import BaseModel, ConfigDict, Field, HttpUrl
 
+from app.schemas.ingestion import JobSummary
+
 
 class JobCreate(BaseModel):
     job_url: HttpUrl
@@ -12,7 +14,7 @@ class JobCreate(BaseModel):
     work_mode: str | None = Field(default=None, max_length=255)
     job_description: str | None = None
     date_posted: date | None = None
-    job_summary: str | None = None
+    job_summary: JobSummary | None = None
     status: str = Field(default="saved", max_length=50)
 
 
@@ -23,7 +25,7 @@ class JobUpdate(BaseModel):
     work_mode: str | None = Field(default=None, max_length=50)
     job_description: str | None = None
     date_posted: date | None = None
-    job_summary: str | None = None
+    job_summary: JobSummary | None = None
     status: str | None = Field(default=None, max_length=50)
 
 
@@ -38,7 +40,7 @@ class JobResponse(BaseModel):
     work_mode: str | None = None
     job_description: str | None = None
     date_posted: date | None = None
-    job_summary: str | None = None
+    job_summary: JobSummary | None = None
     status: str 
     created_at: datetime
     updated_at: datetime

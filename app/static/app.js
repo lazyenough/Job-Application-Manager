@@ -204,7 +204,9 @@ previewBtn.addEventListener("click", async () => {
         setValue(workMode, data.work_mode);
         if (data.job_summary) {
             const requiredExperience = data.job_summary.required_experience ?? "Not available";
+            // console.log("Preview summary data:", data.job_summary);
             const keySkills = data.job_summary.key_skills?.join(", ") ?? "Not available";
+            // console.log("Updated preview code loaded");
 
             jobSummary.textContent =
                 `Required Experience: ${requiredExperience}\nKey Skills: ${keySkills}`;

@@ -7,6 +7,7 @@ from sqlalchemy.dialects.postgresql import JSONB, UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.db.base import Base
+from app.schemas.ingestion import JobSummary
 
 class Job(Base):
     __tablename__ = "jobs"
@@ -23,7 +24,7 @@ class Job(Base):
     work_mode : Mapped[str | None] = mapped_column(String(255), unique=False, nullable=True)
     job_description : Mapped[str | None] = mapped_column(Text, unique=False, nullable=True)
     date_posted: Mapped[date | None] = mapped_column(Date, unique=False, nullable=True)
-    job_summary: Mapped[str | None] = mapped_column(Text, unique=False, nullable=True)
+    job_summary: Mapped[dict | None] = mapped_column(JSONB, unique=False, nullable=True)
     status: Mapped[str] = mapped_column(
         String(50),
         nullable=False,
