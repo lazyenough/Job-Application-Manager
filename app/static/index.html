@@ -1,67 +1,101 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Job Ingestion Preview</title>
+    <title>Job Application Manager</title>
     <link rel="stylesheet" href="/static/style.css">
 </head>
+
 <body>
-    <h1>Job Ingestion Preview</h1>
+    <div class="app-container">
+        <header>
+            <div class="header-copy">
+                <p class="eyebrow">Application Tracker</p>
+                <h1>Job Application Manager</h1>
+            </div>
+            <p class="header-subtitle">Ingest job links, keep opportunities organized, and maintain a clean view of your
+                search pipeline.</p>
+        </header>
 
-    <div class="card">
-        <input
-            type="text"
-            id="jobUrl"
-            placeholder="Enter a job posting URL"
-        />
-        <div class="button-group">
-            <button id="previewBtn">Preview Extraction</button>
-            <button id="ingestBtn">Ingest Job</button>
-            <button id="loadJobsBtn">Load Saved Jobs</button>
-        </div>
-    </div>
+        <!-- <main>
+            <section class="ingest-panel">
+                <div class="section-heading">
+                    <h2>Add a Job</h2>
+                    <p>Paste a job posting URL to bring it into your tracker.</p>
+                </div>
 
-    <div class="error-card" id="errorBox"></div>
-    <div class="card success-card" id="successBox" style="display: none;"></div>
+                <div class="ingest-wrapper">
+                    <input type="url" id="jobUrlInput" class="url-input" placeholder="Paste Job URL" required>
+                    <button id="ingestBtn" class="ingest-btn">Ingest Job</button>
+                </div>
+            </section>
 
-    <div class="result-card" id="resultCard">
-        <div class="field">
-            <div class="label">Job Title</div>
-            <div class="value" id="jobTitle"></div>
-        </div>
+            <section class="saved-jobs-section">
+                <div class="section-heading">
+                    <h2>Saved Jobs</h2>
+                    <p>Review the roles you have captured and keep the list tidy as you move through applications.</p>
+                </div>
 
-        <div class="field">
-            <div class="label">Company Name</div>
-            <div class="value" id="companyName"></div>
-        </div>
+                <div id="jobsContainer" class="jobs-container">
+                    <div class="job-item">
+                        <div class="job-primary">
+                            <h3>AI Engineer</h3>
+                            <span class="job-status">Saved</span>
+                        </div>
+                        <p>Capco • Bengaluru • Full-time</p>
+                    </div>
+                    <div class="job-item">
+                        <div class="job-primary">
+                            <h3>Backend Engineer</h3>
+                            <span class="job-status muted">To Review</span>
+                        </div>
+                        <p>Acme Labs • Pune • Hybrid</p>
+                    </div>
+                    <div class="job-item">&nbsp;</div>
+                    <div class="job-item">&nbsp;</div>
+                    <div class="job-item">&nbsp;</div>
+                    <div class="job-item">&nbsp;</div>
+                </div>
+            </section>
+        </main> -->
+        <main>
+            <!-- Message Boxes for Feedback -->
+            <div id="errorBox" class="message-box error-box"
+                style="display: none; padding: 1rem; margin-bottom: 1rem; background: #fee2e2; color: #991b1b; border-radius: 8px; font-size: 0.95rem; border: 1px solid #fca5a5;">
+            </div>
+            <div id="successBox" class="message-box success-box"
+                style="display: none; padding: 1rem; margin-bottom: 1rem; background: #dcfce7; color: #166534; border-radius: 8px; font-size: 0.95rem; border: 1px solid #86efac;">
+            </div>
 
-        <div class="field">
-            <div class="label">Work Location</div>
-            <div class="value" id="workLocation"></div>
-        </div>
+            <section class="ingest-panel">
+                <div class="section-heading">
+                    <h2>Add a Job</h2>
+                    <p>Paste a job posting URL to bring it into your tracker.</p>
+                </div>
 
-        <div class="field">
-            <div class="label">Work Mode</div>
-            <div class="value" id="workMode"></div>
-        </div>
+                <div class="ingest-wrapper">
+                    <!-- Corrected ID to 'jobUrl' to match app.js -->
+                    <input type="url" id="jobUrl" class="url-input" placeholder="Paste Job URL" required>
+                    <button id="ingestBtn" class="ingest-btn">Ingest Job</button>
+                </div>
+            </section>
 
-        <div class="field">
-            <div class="label">Job Summary</div>
-            <div class="value" id="jobSummary"></div>
-        </div>
+            <section class="saved-jobs-section">
+                <div class="section-heading">
+                    <h2>Saved Jobs</h2>
+                    <p>Review the roles you have captured and keep the list tidy as you move through applications.</p>
+                </div>
 
-        <div class="field">
-            <div class="label">Description Preview</div>
-            <div class="value" id="jobDescriptionPreview"></div>
-        </div>
-    </div>
-
-    <div class="result-card" id="savedJobsCard">
-        <h2>Saved Jobs</h2>
-        <div id="savedJobsList"></div>
+                <div id="jobsContainer" class="jobs-container">
+                    <!-- Dynamically populated via JavaScript -->
+                </div>
+            </section>
+        </main>
     </div>
 
     <script src="/static/app.js"></script>
 </body>
+
 </html>
