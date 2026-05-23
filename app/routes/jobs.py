@@ -72,7 +72,7 @@ def ingest_job(job_data: JobCreate, db: Session = Depends(getDB)):
     try:
         return createJob(db, job_data)
     except IntegrityError:
-        # ✅ Catch duplicate URLs and rollback the failed transaction
+        # Catch duplicate URLs and rollback the failed transaction
         db.rollback()
         raise HTTPException(status_code=409, detail="This job URL has already been saved.")
     except requests.exceptions.RequestException as exc:
