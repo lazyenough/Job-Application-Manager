@@ -614,3 +614,81 @@ main {
 .action-btn-delete:hover {
     background-color: #fca5a5;
 }
+
+/* ==========================================================================
+   MODAL STYLES (Preview & Edit)
+   ========================================================================== */
+.modal-overlay {
+    position: fixed;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: rgba(15, 23, 42, 0.6);
+    backdrop-filter: blur(4px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+}
+
+.modal-content {
+    background: #ffffff;
+    padding: 2rem;
+    border-radius: 16px;
+    width: 100%;
+    max-width: 600px;
+    box-shadow: 0 20px 50px rgba(15, 23, 42, 0.2);
+    max-height: 90vh;
+    overflow-y: auto;
+    border: 2px solid #162033;
+}
+
+.modal-content h2 {
+    font-size: 1.5rem;
+    color: #0f172a;
+    margin-bottom: 0.25rem;
+}
+
+.modal-subtitle {
+    color: #607085;
+    font-size: 0.95rem;
+    margin-bottom: 1.5rem;
+}
+
+.modal-form {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.modal-form .form-group label {
+    display: block;
+    margin-bottom: 0.4rem;
+    font-weight: 600;
+    font-size: 0.9rem;
+    color: #162033;
+}
+
+.modal-input {
+    width: 100%;
+    padding: 0.75rem 1rem;
+    font-size: 0.95rem;
+    border: 2px solid #cfd9e6;
+    border-radius: 10px;
+    outline: none;
+    background: #fcfdff;
+    color: #162033;
+    transition: border-color 0.2s ease;
+}
+
+.modal-input:focus {
+    border-color: #2458d3;
+    background: #ffffff;
+}
+
+.modal-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 1rem;
+    margin-top: 2rem;
+    padding-top: 1.5rem;
+    border-top: 1px solid #cfd9e6;
+}

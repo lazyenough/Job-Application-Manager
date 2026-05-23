@@ -322,6 +322,19 @@ const jobUrlInput = document.getElementById("jobUrl"); // Matches index.html inp
 const errorBox = document.getElementById("errorBox");
 const successBox = document.getElementById("successBox");
 const jobsContainer = document.getElementById("jobsContainer"); // Target container
+const previewModal = document.getElementById("previewModal");
+const cancelModalBtn = document.getElementById("cancelModalBtn");
+const saveModalBtn = document.getElementById("saveModalBtn");
+
+// Modal Input Selectors
+const editJobTitle = document.getElementById("editJobTitle");
+const editCompany = document.getElementById("editCompany");
+const editLocation = document.getElementById("editLocation");
+const editWorkMode = document.getElementById("editWorkMode");
+const editReqExp = document.getElementById("editReqExp");
+const editSkills = document.getElementById("editSkills");
+const hiddenJobUrl = document.getElementById("hiddenJobUrl");
+const hiddenJobDesc = document.getElementById("hiddenJobDesc");
 
 function resetMessages() {
     errorBox.style.display = "none";
@@ -419,10 +432,11 @@ ingestBtn.addEventListener("click", async () => {
     }
 
     ingestBtn.disabled = true;
-    ingestBtn.textContent = "Saving...";
+    ingestBtn.textContent = "Extracting details...";
 
     try {
-        const response = await fetch("/jobs/ingest", {
+        // Hitting your preview endpoint instead of saving directly
+        const response = await fetch("/jobs/ingest/preview", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ job_url: jobUrl })
@@ -430,29 +444,97 @@ ingestBtn.addEventListener("click", async () => {
 
         let data;
         try { data = await response.json(); } catch (e) {
-            errorBox.textContent = "API did not return valid JSON.";
-            errorBox.style.display = "block";
-            return;
+            throw new Error("API did not return valid JSON.");
         }
 
         if (!response.ok) {
-            errorBox.textContent = data.detail || "Something went wrong while saving the job.";
-            errorBox.style.display = "block";
-            return;
+            throw new Error(data.detail || "Something went wrong while previewing the job.");
         }
 
-        successBox.innerHTML = `<strong>Job saved successfully.</strong> (ID: ${data.id})`;
-        successBox.style.display = "block";
-        jobUrlInput.value = ""; // Clear input bar
+        // Populate Modal Fields with extracted data
+        editJobTitle.value = data.job_title ?? "";
+        editCompany.value = data.company_name ?? "";
+        editLocation.value = data.location ?? "";
+        editWorkMode.value = data.work_mode ?? "";
+        
+        if (data.job_summary) {
+            editReqExp.value = data.job_summary.required_experience ?? "";
+            editSkills.value = data.job_summary.key_skills ? data.job_summary.key_skills.join(", ") : "";
+        } else {
+            editReqExp.value = "";
+            editSkills.value = "";
+        }
 
-        // Refresh the list automatically to catch the new item
-        await loadInitialJobs();
+        // Store hidden fields to persist them
+        hiddenJobUrl.value = jobUrl;
+        hiddenJobDesc.value = data.job_description || data.job_description_preview || "";
+
+        // Show Modal
+        previewModal.style.display = "flex";
+
     } catch (error) {
-        errorBox.textContent = "Something went wrong while calling the API.";
+        errorBox.textContent = error.message || "Something went wrong while calling the API.";
         errorBox.style.display = "block";
     } finally {
         ingestBtn.disabled = false;
         ingestBtn.textContent = "Ingest Job";
+    }
+});
+
+// 2. Modal Cancel Action
+cancelModalBtn.addEventListener("click", () => {
+    previewModal.style.display = "none";
+});
+
+// 3. Modal Save Action (Saves edited data to DB)
+saveModalBtn.addEventListener("click", async () => {
+    // 1. Ensure the URL has http:// or https:// for Pydantic's HttpUrl
+    let rawUrl = hiddenJobUrl.value.trim();
+    if (!rawUrl.startsWith("http://") && !rawUrl.startsWith("https://")) {
+        rawUrl = "https://" + rawUrl; 
+    }
+
+    // 2. Convert the comma-separated string back into a clean array of strings
+    const rawSkills = editSkills.value.split(",")
+        .map(skill => skill.trim())
+        .filter(skill => skill.length > 0);
+
+    // 3. Construct the payload to exactly match JobCreate schema
+    const editedJobData = {
+        job_url: rawUrl,
+        job_title: editJobTitle.value.trim() || null,
+        company_name: editCompany.value.trim() || null,
+        location: editLocation.value.trim() || null,
+        work_mode: editWorkMode.value.trim() || null,
+        job_description: hiddenJobDesc.value.trim() || null,
+        job_summary: {
+            required_experience: editReqExp.value.trim() || null,
+            key_skills: rawSkills.length > 0 ? rawSkills : null 
+        }
+    };
+
+    try {
+        // 4. Send directly without the { job_data: ... } wrapper
+        const response = await fetch("/jobs/ingest", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(editedJobData) 
+        });
+
+        if (!response.ok) {
+            const errorData = await response.json();
+            console.error("Validation Error Details:", errorData);
+            throw new Error(errorData.detail || "Failed to save job.");
+        }
+
+        const data = await response.json();
+        alert("Job successfully saved!");
+        previewModal.style.display = "none";
+
+        await loadInitialJobs();
+        
+    } catch (error) {
+        alert(error.message);
     }
 });
 

@@ -2,12 +2,13 @@ from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException
 import requests
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
 from app.db.dependencies import getDB
 from app.schemas.job import JobCreate, JobResponse, JobUpdate
 from app.schemas.ingestion import JobIngestRequest, JobIngestPreviewResponse
-from app.services.job_services import createJob, deleteJob, readJobById, readJobs, updateJob
+from app.services.job_services import createJob, deleteJob, isJobExists, readJobById, readJobs, updateJob
 from app.services.ingestion_service import ingest_job_url, preview_job_ingestion, preview_job_ingestion_debug
 
 
@@ -56,19 +57,36 @@ def deleteJobEndpoint(job_id: UUID, db: Session = Depends(getDB)):
     return {"message": f"Job with ID: {job_id}, deleted successfully."}
 
 
-@jobs_router.post("/ingest", response_model=JobResponse)
-def ingest_job(job_request: JobIngestRequest, db: Session = Depends(getDB)):
-    try:
-        return ingest_job_url(db, str(job_request.job_url))
-    except requests.exceptions.RequestException as exc:
-        raise HTTPException(status_code=502, detail=f"Failed to fetch job page: {str(exc)}")
-    except ValueError as exc:
-        raise HTTPException(status_code=422, detail=str(exc))
+# @jobs_router.post("/ingest", response_model=JobResponse)
+# def ingest_job(job_request: JobIngestRequest, db: Session = Depends(getDB)):
+#     try:
+#         return ingest_job_url(db, str(job_request.job_url))
+#     except requests.exceptions.RequestException as exc:
+#         raise HTTPException(status_code=502, detail=f"Failed to fetch job page: {str(exc)}")
+#     except ValueError as exc:
+#         raise HTTPException(status_code=422, detail=str(exc))
 
+
+@jobs_router.post("/ingest", response_model=JobResponse)
+def ingest_job(job_data: JobCreate, db: Session = Depends(getDB)):
+    try:
+        return createJob(db, job_data)
+    except IntegrityError:
+        # ✅ Catch duplicate URLs and rollback the failed transaction
+        db.rollback()
+        raise HTTPException(status_code=409, detail="This job URL has already been saved.")
+    except requests.exceptions.RequestException as exc:
+        raise HTTPException(status_code=502, detail=f"Failed to save job: {str(exc)}")
+    
 
 @jobs_router.post("/ingest/preview", response_model=JobIngestPreviewResponse)
-def preview_job_ingest(job_request: JobIngestRequest):
+def preview_job_ingest(job_request: JobIngestRequest, db: Session = Depends(getDB)):
     try:
+        if isJobExists(db, str(job_request.job_url)):
+            raise HTTPException(
+                status_code=409, 
+                detail="This job has already been saved."
+        )
         return preview_job_ingestion(str(job_request.job_url))
     except requests.exceptions.RequestException as exc:
         raise HTTPException(status_code=502, detail=f"Failed to fetch job page: {str(exc)}")

@@ -70,3 +70,14 @@ def get_job_by_url(db, job_url: str) -> Job | None:
     job = db.execute(statement).scalar_one_or_none()
     
     return job
+
+
+def isJobExists(db, job_url: str) -> bool:
+    statement = select(Job).where(Job.job_url == job_url)
+    
+    job = db.execute(statement).scalar_one_or_none()
+    
+    if job:
+        return True
+
+    return False
