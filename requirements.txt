@@ -11,3 +11,6 @@ lxml
 pytest
 httpx
 openai
+passlib[bcrypt] 
+python-multipart
+pydantic[email]

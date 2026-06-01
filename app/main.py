@@ -1,12 +1,16 @@
 import os
 # from dotenv import load_dotenv
 
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
+from fastapi.exceptions import ResponseValidationError
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse
 
 from app.routes.jobs import jobs_router
+from app.routes.auth import auth_router
 from app.db.base import Base
 from app.db.session import engine
+from app.models.user import User
 
 from contextlib import asynccontextmanager
 
@@ -20,7 +24,10 @@ async def lifespan(app: FastAPI):
     
 app = FastAPI(lifespan=lifespan)
 
-app.include_router(jobs_router)
+routers = [jobs_router, auth_router]
+
+for router in routers:
+    app.include_router(router)
 
 
 frontend_url = os.getenv("FRONTEND_URL")
@@ -49,3 +56,17 @@ def healthCheck():
 @app.get("/")
 def read_root():
     return {"message": "API is running"}
+
+
+@app.get("/debug-cookies")
+def debug_cookies(request: Request):
+    print("\n--- 🍪 INCOMING COOKIES DEBUG ---")
+    print(f"All Raw Cookies: {request.cookies}")
+    print(f"Target Session Cookie: {request.cookies.get('session_user_id')}")
+    print("---------------------------------\n")
+    
+    return {
+        "message": "Cookie check completed", 
+        "cookies_received": request.cookies
+    }
+    

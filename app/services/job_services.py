@@ -5,9 +5,10 @@ from uuid import UUID
 
 from app.db.session import SessionLocal
 from app.models.job import Job
+from app.models.user import User
 from app.schemas.job import JobCreate, JobUpdate
 
-def createJob(db, job_data: JobCreate) -> Job:
+def createJob(db, job_data: JobCreate, current_user: User) -> Job:
 
     job = Job(
         job_url=str(job_data.job_url),
@@ -19,6 +20,7 @@ def createJob(db, job_data: JobCreate) -> Job:
         date_posted=job_data.date_posted,
         job_summary=job_data.job_summary.model_dump() if job_data.job_summary else None,
         status=job_data.status,
+        user_id = current_user.id
     )
 
     db.add(job)
@@ -27,8 +29,8 @@ def createJob(db, job_data: JobCreate) -> Job:
     return job
 
 
-def readJobs(db, job_status: str | None = None, company_name: str | None = None) -> list[Job]:
-    statement = select(Job)
+def readJobs(db, current_user: User, job_status: str | None = None, company_name: str | None = None) -> list[Job]:
+    statement = select(Job).where(Job.user_id == current_user.id)
 
     if job_status is not None:
         statement = statement.where(Job.status == job_status)
@@ -40,14 +42,14 @@ def readJobs(db, job_status: str | None = None, company_name: str | None = None)
     return jobs
 
 
-def readJobById(db, job_id: UUID):
+def readJobById(db, job_id: UUID, current_user: User):
 
-    statement = select(Job).where(Job.id == job_id)
+    statement = select(Job).where(Job.id == job_id).where(Job.user_id == current_user.id)
     job = db.execute(statement).scalar_one_or_none()
     return job
 
 
-def updateJob(db, job: Job, updated_job: JobUpdate) -> Job:
+def updateJob(db, job: Job, updated_job: JobUpdate, current_user: User) -> Job:
     update_data = updated_job.model_dump(exclude_unset=True)
 
     for field, value in update_data.items():
@@ -64,16 +66,16 @@ def deleteJob(db, job: Job) -> bool:
     return
 
 
-def get_job_by_url(db, job_url: str) -> Job | None:
-    statement = select(Job).where(Job.job_url == job_url)
+def get_job_by_url(db, job_url: str, current_user: User) -> Job | None:
+    statement = select(Job).where(Job.job_url == job_url).where(Job.user_id == current_user.id)
     
     job = db.execute(statement).scalar_one_or_none()
     
     return job
 
 
-def isJobExists(db, job_url: str) -> bool:
-    statement = select(Job).where(Job.job_url == job_url)
+def isJobExists(db, job_url: str, current_user: User) -> bool:
+    statement = select(Job).where(Job.job_url == job_url).where(Job.user_id == current_user.id)
     
     job = db.execute(statement).scalar_one_or_none()
     

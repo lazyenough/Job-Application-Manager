@@ -2,11 +2,12 @@ from uuid import uuid4
 from uuid import UUID as PyUUID
 from datetime import date, datetime
 
-from sqlalchemy import Date, DateTime, String, Text, Boolean, func
+from sqlalchemy import Date, DateTime, ForeignKey, String, Text, Boolean, func
 from sqlalchemy.dialects.postgresql import JSONB, UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.db.base import Base
+# from app.models.user import User
 from app.schemas.ingestion import JobSummary
 
 class Job(Base):
@@ -42,3 +43,10 @@ class Job(Base):
         server_default=func.now(),
         onupdate=func.now(),
     )
+    
+    user_id: Mapped[int] = mapped_column(
+        ForeignKey("users.id", ondelete="CASCADE"), 
+        nullable=False
+    )
+    
+    owner: Mapped["User"] = relationship("User", back_populates="jobs")
