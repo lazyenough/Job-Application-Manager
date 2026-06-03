@@ -36,6 +36,7 @@ def get_user_by_email(email, db):
 def get_current_user(request: Request, db: Session = Depends(getDB)):
     # 1. Read the session cookie from the incoming request headers
     session_id = request.cookies.get("session_user_id")
+    print(f"Session ID: {session_id}")
     
     # 2. If the cookie is missing, block the request immediately
     if not session_id:

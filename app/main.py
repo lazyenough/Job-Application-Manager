@@ -5,6 +5,7 @@ from fastapi import FastAPI, Request
 from fastapi.exceptions import ResponseValidationError
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
+from fastapi.staticfiles import StaticFiles
 
 from app.routes.jobs import jobs_router
 from app.routes.auth import auth_router
@@ -53,9 +54,9 @@ def healthCheck():
     return {"status": "ok"}
 
 
-@app.get("/")
-def read_root():
-    return {"message": "API is running"}
+# @app.get("/")
+# def read_root():
+#     return {"message": "API is running"}
 
 
 @app.get("/debug-cookies")
@@ -70,3 +71,5 @@ def debug_cookies(request: Request):
         "cookies_received": request.cookies
     }
     
+
+app.mount("/", StaticFiles(directory="Frontend", html=True), name="Frontend")

@@ -56,7 +56,7 @@ def login_user(user_data: UserCredential, response: Response, db: Session = Depe
         value=str(user.id),
         path="/",
         httponly=True,       # Prevents hackers from stealing the cookie via JS (XSS defense)
-        secure=False,        # Set to True in production (requires HTTPS)
+        secure=True,        # Set to True in production (requires HTTPS)
         samesite="lax",      # Protects against Cross-Site Request Forgery (CSRF)
         max_age=1800         # Cookie automatically expires after 30 minutes (1800 seconds)
     )
