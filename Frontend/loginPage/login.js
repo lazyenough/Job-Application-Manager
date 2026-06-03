@@ -1,5 +1,6 @@
 // const API_BASE_URL = "http://127.0.0.1:8000";
-const API_BASE_URL = "https://job-application-manager-xfxz.onrender.com";
+// const API_BASE_URL = "https://job-application-manager-xfxz.onrender.com";
+const API_BASE_URL = ""
 
 const authEmailInput = document.getElementById("authEmail");
 const authPasswordInput = document.getElementById("authPassword");
