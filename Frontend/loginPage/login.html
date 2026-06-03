@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login - Job Application Manager</title>
+    <link rel="stylesheet" href="../style.css">
+</head>
+<body>
+    <div class="app-container" style="max-width: 500px; margin-top: 5vh;">
+        <header style="flex-direction: column; align-items: flex-start; text-align: left; padding: 2rem;">
+            <div class="header-copy">
+                <p class="eyebrow">Secure Portal</p>
+                <h1>Account Sign In</h1>
+            </div>
+            <p class="header-subtitle" style="text-align: left; max-width: 100%; margin-top: 0.5rem;">
+                Log in to sync your active interview pipeline, or register a new developer profile.
+            </p>
+        </header>
+        
+        <main style="padding: 2rem;">
+            <div id="errorBox" class="message-box error-box" style="display: none; padding: 1rem; margin-bottom: 1.5rem;"></div>
+            <div id="successBox" class="message-box success-box" style="display: none; padding: 1rem; margin-bottom: 1.5rem;"></div>
+
+            <div class="modal-form" style="gap: 1.25rem;">
+                <div class="form-group">
+                    <label for="authEmail">Email Address</label>
+                    <input type="email" id="authEmail" class="url-input" placeholder="name@company.com" style="min-height: 48px;">
+                </div>
+                <div class="form-group">
+                    <label for="authPassword">Password</label>
+                    <input type="password" id="authPassword" class="url-input" placeholder="••••••••" style="min-height: 48px;">
+                </div>
+                
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-top: 1rem;">
+                    <button id="loginBtn" class="ingest-btn" style="min-height: 48px; min-width: auto;">Login</button>
+                    <button id="registerBtn" class="action-btn-update" style="min-height: 48px; border-radius: 16px;">Register</button>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script src="login.js"></script>
+</body>
+</html>
