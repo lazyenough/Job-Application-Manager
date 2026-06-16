@@ -1,3 +1,5 @@
+from datetime import datetime, timezone
+
 import bcrypt
 from fastapi import Depends, HTTPException, Request, status
 from passlib.context import CryptContext
@@ -5,6 +7,7 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from app.db.dependencies import getDB
+from app.models.session import UserSession
 from app.models.user import User
 
 # Tell PassLib to use bcrypt. 
@@ -35,24 +38,41 @@ def get_user_by_email(email, db):
 
 def get_current_user(request: Request, db: Session = Depends(getDB)):
     # 1. Read the session cookie from the incoming request headers
-    session_id = request.cookies.get("session_user_id")
-    print(f"Session ID: {session_id}")
+    token = request.cookies.get("session_token")
+    print(f"Token: {token}")
     
     # 2. If the cookie is missing, block the request immediately
-    if not session_id:
+    if not token:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Not authenticated"
+            detail="Session missing. Please log in."
         )
         
     # 3. Look up the user in the database
-    user = db.query(User).filter(User.id == int(session_id)).first()
-    if not user:
+    session = db.query(UserSession).filter(UserSession.session_token == token).first()
+    print(f"Session: {session}")
+    if not session:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="User profile not found"
+            detail="Invalid session token."
+        )
+    
+    current_time = datetime.now(timezone.utc).replace(tzinfo=None) 
+    if session.expires_at < current_time:
+        # Clean up expired session from DB
+        db.delete(session)
+        db.commit()
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED, 
+            detail="Session expired. Please log in again."
         )
         
+    user = db.query(User).filter(User.id == session.user_id).first()
+    if not user:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED, 
+            detail="User account not found."
+        )
     return user
 
 def verify_password(received_password, stored_password):

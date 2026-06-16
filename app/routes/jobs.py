@@ -78,6 +78,18 @@ def deleteJobEndpoint(job_id: UUID, db: Session = Depends(getDB), current_user: 
 
 @jobs_router.post("/ingest", response_model=JobResponse)
 def ingest_job(job_data: JobCreate, db: Session = Depends(getDB), current_user: User = Depends(get_current_user)):
+    
+    existing_job = db.query(Job).filter(
+        Job.job_url == str(job_data.job_url), 
+        Job.user_id == current_user.id
+    ).first()
+
+    if existing_job:
+        raise HTTPException(
+            status_code=409, 
+            detail="You have already saved this job."
+        )
+        
     try:
         return createJob(db, job_data, current_user)
     except IntegrityError:

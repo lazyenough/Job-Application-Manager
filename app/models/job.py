@@ -2,7 +2,7 @@ from uuid import uuid4
 from uuid import UUID as PyUUID
 from datetime import date, datetime
 
-from sqlalchemy import Date, DateTime, ForeignKey, String, Text, Boolean, func
+from sqlalchemy import Date, DateTime, ForeignKey, String, Text, Boolean, UniqueConstraint, func
 from sqlalchemy.dialects.postgresql import JSONB, UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
@@ -18,7 +18,7 @@ class Job(Base):
         primary_key=True,
         default=uuid4
     )
-    job_url: Mapped[str] = mapped_column(Text, unique=True, nullable=False)
+    job_url: Mapped[str] = mapped_column(Text, nullable=False)
     job_title: Mapped[str | None] = mapped_column(String(255), unique=False, nullable=True)
     company_name: Mapped[str | None] = mapped_column(String(255), unique=False, nullable=True)
     location: Mapped[str | None] = mapped_column(String(255), unique=False, nullable=True)
@@ -50,3 +50,7 @@ class Job(Base):
     )
     
     owner: Mapped["User"] = relationship("User", back_populates="jobs")
+    
+    __table_args__ = (
+        UniqueConstraint('user_id', 'job_url', name='_user_job_url_uc'),
+    )

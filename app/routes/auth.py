@@ -1,7 +1,11 @@
+from datetime import datetime, timedelta, timezone
+import uuid
+
 from fastapi.responses import JSONResponse
 from sqlalchemy.orm import Session
-from fastapi import APIRouter, Depends, HTTPException, status, Response
+from fastapi import APIRouter, Depends, HTTPException, Request, status, Response
 
+from app.models.session import UserSession
 from app.models.user import User
 from app.services.login_service import get_user_by_email, hash_password, verify_password
 from app.schemas.auth import UserCredential, UserResponse
@@ -49,11 +53,22 @@ def login_user(user_data: UserCredential, response: Response, db: Session = Depe
             detail="Invalid email or password."
         )
     
-    response = JSONResponse(content={"message": "Login successful!"})
+    db.query(UserSession).filter(UserSession.user_id == user.id).delete()
+    
+    # response = JSONResponse(content={"message": "Login successful!"})
+    expiration_time = datetime.now(timezone.utc) + timedelta(seconds=1800)
+    new_session = UserSession(
+        session_token=str(uuid.uuid4()),
+        user_id=user.id,
+        expires_at=expiration_time
+    )
+    
+    db.add(new_session)
+    db.commit()
     
     response.set_cookie(
-        key="session_user_id",
-        value=str(user.id),
+        key="session_token",
+        value=new_session.session_token,
         path="/",
         httponly=True,       # Prevents hackers from stealing the cookie via JS (XSS defense)
         secure=True,        # Set to True in production (requires HTTPS)
@@ -61,23 +76,26 @@ def login_user(user_data: UserCredential, response: Response, db: Session = Depe
         max_age=1800         # Cookie automatically expires after 30 minutes (1800 seconds)
     )
     
-    return response
+    return {"message": "Logged in successfully"}
 
 @auth_router.post("/logout")
-def logout_user():
+def logout_user(request: Request, response: Response, db: Session = Depends(getDB)):
     """
     Logs the user out by instructing the browser to clear 
     the session cookie immediately.
     """
     # 1. Create a clear JSON response packet
-    response = JSONResponse(content={"message": "Logged out successfully!"})
+    token = request.cookies.get("session_token")
     
-    # 2. Tell the browser to invalidate and delete the session cookie
-    response.delete_cookie(
-        key="session_user_id",
-        path="/",          # Must match the path where the cookie was created
-        domain=None        # Matches the host domain
-    )
+    # 1. If token is in database, delete it permanently
+    if token:
+        session_record = db.query(UserSession).filter(UserSession.session_token == token).first()
+        if session_record:
+            db.delete(session_record)
+            db.commit()
+
+    # 2. Instruct the browser to instantly delete the cookie locally
+    response.delete_cookie(key="session_token", path="/")
     
-    return response
+    return {"message": "Logged out successfully"}
 

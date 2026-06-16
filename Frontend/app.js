@@ -110,17 +110,19 @@ function renderSavedJobs(jobs) {
 
 // Fetch Initial Pipeline Data (Loads top 5 jobs at startup)
 async function loadInitialJobs() {
-    jobsContainer.innerHTML = `
-        <div class="loading-state">
-            <div class="spinner"></div>
-            <p>Verifying authentication token pipeline...</p>
-        </div>`;
+
+    const appContainer = document.getElementById("appContainer");
+    const globalAuthLoader = document.getElementById("globalAuthLoader");
+
+    jobsContainer.innerHTML = '';
 
     try {
         const response = await fetch(`${API_BASE_URL}/jobs`, { credentials: "include" });
         
         if (response.ok) {
             let data = await response.json();
+            if (globalAuthLoader) globalAuthLoader.style.display = "none";
+            if (appContainer) appContainer.style.display = "block";
             renderSavedJobs(data.slice(0, 5));
         } 
         // ROUTE GUARDING: If the backend says "Not authorized", kick them to login page!
@@ -128,10 +130,14 @@ async function loadInitialJobs() {
             window.location.href = "loginPage/login.html";
             return;
         } else {
+            if (globalAuthLoader) globalAuthLoader.style.display = "none";
+            if (appContainer) appContainer.style.display = "block";
             jobsContainer.innerHTML = '<p class="job-meta-text" style="padding: 2rem; text-align: center; color: #991b1b;">Could not fetch secure records.</p>';
         }
     } catch (error) {
         console.error(error);
+        if (globalAuthLoader) globalAuthLoader.style.display = "none";
+            if (appContainer) appContainer.style.display = "block";
         jobsContainer.innerHTML = '<p class="job-meta-text" style="padding: 2rem; text-align: center; color: #991b1b;">Network Connection Offline.</p>';
     }
 }
